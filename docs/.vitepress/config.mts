@@ -124,8 +124,12 @@ function sidebarTypescript(): DefaultTheme.SidebarItem[] {
               base: '/typescript/handbook/type-manipulation/',
               items: [
                 {
-                  text: '创建类型',
+                  text: '从类型创建类型',
                   link: 'create-types',
+                },
+                {
+                  text: '泛型',
+                  link: 'generics',
                 },
               ],
             },
