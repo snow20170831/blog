@@ -3,9 +3,9 @@
 layout: home
 
 hero:
-  name: "My Awesome Project"
-  text: "A VitePress Site"
-  tagline: My great project tagline
+  name: '我的博客'
+  # text: 'A VitePress Site'
+  # tagline: My great project tagline
   actions:
     - theme: brand
       text: Markdown Examples
@@ -15,11 +15,10 @@ hero:
       link: /api-examples
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature B
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+  - title: Vue 3
+    details: 包含响应式、组件化与编译器
+    link: /vue/reactivity.md
+  - title: TypeScript 5.9
+    details: TypeScript
+    link: /typescript/handbook/basics.md
 ---
-
