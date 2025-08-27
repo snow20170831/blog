@@ -118,6 +118,7 @@ function sidebarTypescript(): DefaultTheme.SidebarItem[] {
               text: '常见类型',
               link: 'everyday-types',
             },
+            { text: '对象类型', link: 'objects' },
             {
               text: '类型操作',
               collapsed: true,
