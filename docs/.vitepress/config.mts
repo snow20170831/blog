@@ -84,7 +84,6 @@ function searchOptions(): Partial<DefaultTheme.LocalSearchOptions> {
 
 function nav(): DefaultTheme.NavItem[] {
   return [
-    { text: '主页', link: '/' },
     { text: 'Vue 3', link: '/vue/reactivity' },
     { text: 'TypeScript 5.9', link: '/typescript/handbook/basics' },
   ];

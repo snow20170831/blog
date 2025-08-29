@@ -15,7 +15,7 @@
 为了指定数组 [1, 2, 3] 的类型可以使用语法 `number[]` 或 `Array<number>`; 此语法适用于任何类型（例如，`string[]` 或 `Array<string>` 是字符串数组，以此类推）。我们将在介绍泛型时进一步了解 `T<U>` 语法。
 
 ::: tip
-请注意，[number] 是不同的东西；请查看[元组](./objects#元组)部分。
+请注意，[number] 是不同的东西；请查看[元组](./objects#元组类型)部分。
 :::
 
 ## any
@@ -467,14 +467,191 @@ const a = expr as any as T;
 
 ## 字面量类型
 
+除了一般的字符串和数字类型外，我们还可以在类型位置中引用特定的字符串和数字。
+
+思考这个问题的一种方法是考虑 JavaScript 如何提供不同的变量声明方式。var 和 let 都允许更改变量中的内容，而 const 则不允许。这也反映在 TypeScript 创建字面类型的方式中。
+
+```js
+let changingString = 'Hello World';
+changingString = 'Olá Mundo';
+// Because `changingString` can represent any possible string, that
+// is how TypeScript describes it in the type system
+changingString;
+// let changingString: string
+
+const constantString = 'Hello World';
+// Because `constantString` can only represent 1 possible string, it
+// has a literal type representation
+constantString;
+// const constantString: "Hello World"
+```
+
+字面类型本身并没有什么价值：
+
+```js
+let x: 'hello' = 'hello';
+// OK
+x = 'hello';
+// ...
+x = 'howdy';
+// Type '"howdy"' is not assignable to type '"hello"'.
+```
+
+如果一个变量只能有一个值，那就没什么用了！
+
+但是，将字面量组合成联合变量，就可以表达一个更有用的概念，例如，只接受一组已知值的函数：
+
+```js
+function printText(s: string, alignment: 'left' | 'right' | 'center') {
+  // ...
+}
+printText('Hello, world', 'left');
+printText("G'day, mate", 'centre');
+// Argument of type '"centre"' is not assignable to parameter of type '"left" | "right" | "center"'.
+```
+
+数字字面类型的工作方式相同：
+
+```js
+function compare(a: string, b: string): -1 | 0 | 1 {
+  return a === b ? 0 : a > b ? 1 : -1;
+}
+```
+
+当然，您也可以将这些类型与非字面类型结合起来：
+
+```js
+interface Options {
+  width: number;
+}
+function configure(x: Options | 'auto') {
+  // ...
+}
+configure({ width: 100 });
+configure('auto');
+configure('automatic');
+// Argument of type '"automatic"' is not assignable to parameter of type 'Options | "auto"'.
+```
+
+还有一种字面类型：布尔字面类型。布尔字面类型只有两种，正如你可能猜到的，它们是 true 和 false 类型。布尔类型本身实际上只是 true | false 联盟的别名。
+
 ### 字面量推断
+
+当您使用对象初始化变量时，TypeScript 假定该对象的属性稍后可能会改变值。例如，如果你写了这样的代码:
+
+```js
+const obj = { counter: 0 };
+if (someCondition) {
+  obj.counter = 1;
+}
+```
+
+TypeScript 不会认为将 1 赋值给之前为 0 的字段是错误的。另一种说法是，obj.counter 的类型必须是数字，而不是 0，因为类型用于确定读写行为。
+
+这同样适用于字符串：
+
+```js
+declare function handleRequest(url: string, method: 'GET' | 'POST'): void;
+
+const req = { url: 'https://example.com', method: 'GET' };
+handleRequest(req.url, req.method);
+// Argument of type 'string' is not assignable to parameter of type '"GET" | "POST"'.
+```
+
+在上例中，req.method 被推断为字符串，而不是 "GET"。由于在创建 req 和调用 handleRequest 之间可以评估代码，而这些代码可以为 req.method 分配一个新的字符串，如 "GUESS"，因此 TypeScript 认为此代码有错误。
+
+有两种方法可以解决这个问题。
+
+1. 您可以通过在任一位置添加类型断言来更改推论：
+
+```js
+// Change 1:
+const req = { url: "https://example.com", method: "GET" as "GET" };
+// Change 2
+handleRequest(req.url, req.method as "GET");
+```
+
+2. 可以使用 const 将整个对象转换为类型字面量：
+
+```js
+const req = { url: "https://example.com", method: "GET" } as const;
+handleRequest(req.url, req.method);
+```
+
+as const 后缀的作用与 const 类似，但针对的是类型系统，它确保所有属性都被指定为字面类型，而不是字符串或数字等更通用的类型。
 
 ## null 与 undefined
 
+JavaScript 有两个用于表示不存在或未初始化值的原始类型值：null 和 undefined。
+
+TypeScript 也有两个同名的对应类型。这些类型的行为方式取决于是否开启了 [strictNullChecks](https://www.typescriptlang.org/tsconfig/#strictNullChecks) 选项。
+
+### strictNullChecks off
+
+在关闭 strictNullChecks 的情况下，可能为空或未定义的值仍可正常访问，并且空值和未定义值可赋值给任何类型的属性。这与没有空值检查的语言（如 C#、Java）的行为类似。缺乏对这些值的检查往往是产生 bug 的主要原因；如果在代码库中可以做到这一点，我们总是建议用户开启 strictNullChecks。
+
+### strictNullChecks on
+
+如果开启了 strictNullChecks，当某个值为 null 或未定义时，在对该值使用方法或属性之前，需要对这些值进行测试。就像在使用可选属性前检查未定义一样，我们可以使用缩小检查来检查可能为空的值：
+
+```js
+function doSomething(x: string | null) {
+  if (x === null) {
+    // do nothing
+  } else {
+    console.log('Hello, ' + x.toUpperCase());
+  }
+}
+```
+
+### 非空断言操作符 `!`
+
+TypeScript 还有一种特殊的语法，可以在不进行任何显式检查的情况下从类型中删除 null 和 undefined。在任何表达式后写入 `!` 实际上就是类型断言，即值不是 null 或未定义的：
+
+```js
+function liveDangerously(x?: number | null) {
+  // No error
+  console.log(x!.toFixed());
+}
+```
+
+就像其他类型断言一样，这不会改变代码的运行时行为，因此只有在知道值不能为空或未定义时才使用 `!`
+
 ## 枚举
+
+枚举（Enums）是 TypeScript 为 JavaScript 添加的一项功能，它允许描述一个值，该值可以是一组可能的命名常量之一。与大多数 TypeScript 特性不同的是，枚举并不是 JavaScript 类型级的新增特性，而是添加到语言和运行时中的特性。因此，您应该知道枚举的存在，但除非您非常确定，否则最好不要使用它。有关枚举的更多信息，请参阅[枚举参考页面](https://www.typescriptlang.org/docs/handbook/enums.html)。
 
 ## 不常见的原始类型
 
+值得一提的是，JavaScript 中的其他原始类型也在类型系统中有所体现。尽管我们不会在此深入探讨。
+
 ### bigint
 
+从 ES2020 开始，JavaScript 中出现了一种用于超大整数的原始类型，即 BigInt：
+
+```js
+// Creating a bigint via the BigInt function
+const oneHundred: bigint = BigInt(100);
+
+// Creating a BigInt via the literal syntax
+const anotherHundred: bigint = 100n;
+```
+
+您可以在 [TypeScript 3.2 发布说明](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-2.html#bigint)中了解有关 BigInt 的更多信息。
+
 ### symbol
+
+在 JavaScript 中有一种基本方法，用于通过函数 Symbol() 创建全局唯一引用：
+
+```js
+const firstName = Symbol('name');
+const secondName = Symbol('name');
+
+if (firstName === secondName) {
+  // This comparison appears to be unintentional because the types 'typeof
+  //  firstName' and 'typeof secondName' have no overlap.
+  // Can't ever happen
+}
+```
+
+有关它们的更多信息，请参阅 [Symbols 参考页面](https://www.typescriptlang.org/docs/handbook/symbols.html)。
