@@ -18,6 +18,7 @@ export default defineConfig({
     sidebar: {
       '/vue/': sidebarVue(),
       '/typescript/': sidebarTypescript(),
+      '/ai/': sidebarAI(),
     },
 
     socialLinks: [
@@ -86,6 +87,7 @@ function nav(): DefaultTheme.NavItem[] {
   return [
     { text: 'Vue 3', link: '/vue/reactivity' },
     { text: 'TypeScript 5.9', link: '/typescript/handbook/basics' },
+    { text: 'AI', link: '/ai/gemini-cli' },
   ];
 }
 
@@ -136,6 +138,15 @@ function sidebarTypescript(): DefaultTheme.SidebarItem[] {
           ],
         },
       ],
+    },
+  ];
+}
+
+function sidebarAI(): DefaultTheme.SidebarItem[] {
+  return [
+    {
+      text: 'AI 相关',
+      items: [{ text: 'gemini cli', link: '/ai/gemini-cli' }],
     },
   ];
 }
